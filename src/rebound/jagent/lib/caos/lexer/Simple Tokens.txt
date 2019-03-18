@@ -1,0 +1,628 @@
+brn: dmpb
+brn: dmpd
+brn: dmpl
+brn: dmpt
+brn: setd
+brn: setl
+brn: setn
+brn: sett
+
+dbg: asrt
+dbg: cpro
+dbg: flsh
+dbg: html
+dbg: outs
+dbg: outv
+dbg: paws
+dbg: play
+dbg: poll
+dbg: prof
+dbg: tack
+dbg: tock
+dbg: wtik
+
+file glob
+file iclo
+file iope
+file jdel
+file oclo
+file oflu
+file oope
+
+gene clon
+gene cros
+gene kill
+gene load
+gene move
+
+gids fmly
+gids gnus
+gids root
+gids spcs
+
+hist cage
+hist coun
+hist cros
+hist date
+hist evnt
+hist find
+hist finr
+hist foto
+hist gend
+hist gnus
+hist mon1
+hist mon2
+hist mute
+hist name
+hist netu
+hist next
+hist prev
+hist rtim
+hist sean
+hist tage
+hist time
+hist type
+hist utxt
+hist vari
+hist wipe
+hist wnam
+hist wtik
+hist wuid
+hist wvet
+hist year
+
+mesg writ
+mesg wrt+
+
+net: erra
+net: expo
+net: from
+net: head
+net: hear
+net: host
+net: line
+net: make
+net: pass
+net: rawe
+net: ruso
+net: stat
+net: ulin
+net: unik
+net: user
+net: what
+net: whod
+net: whof
+net: whon
+net: whoz
+net: writ
+
+new: comp
+new: crag
+new: crea
+new: simp
+new: vhcl
+
+ordr shou
+ordr sign
+ordr tact
+ordr writ
+
+pat: butt
+pat: cmra
+pat: dull
+pat: fixd
+pat: grph
+pat: kill
+pat: move
+pat: text
+
+pray agti
+pray agts
+pray back
+pray coun
+pray deps
+pray expo
+pray file
+pray fore
+pray garb
+pray impo
+pray injt
+pray kill
+pray make
+pray next
+pray prev
+pray refr
+pray test
+
+prt: bang
+prt: frma
+prt: from
+prt: inew
+prt: itot
+prt: izap
+prt: join
+prt: krak
+prt: name
+prt: onew
+prt: otot
+prt: ozap
+prt: send
+
+stim shou
+stim sign
+stim tact
+stim writ
+
+sway shou
+sway sign
+sway tact
+sway writ
+
+urge shou
+urge sign
+urge tact
+urge writ
+
+_cd_ ejct
+_cd_ frqh
+_cd_ frql
+_cd_ frqm
+_cd_ init
+_cd_ paws
+_cd_ play
+_cd_ shut
+_cd_ stop
+
+
+
+doif
+elif
+else
+loop
+reps
+enum
+epas
+esee
+etch
+econ
+endm
+retn
+endi
+ever
+untl
+repe
+next
+inst
+slow
+avar
+eame
+from
+game
+mame
+name
+velx
+vely
+_p1_
+_p2_
+pntr
+ownr
+null
+
+
+
+
+abba
+absv
+accg
+acos
+addb
+addm
+addr
+adds
+addv
+adin
+admp
+aero
+ages
+agnt
+alph
+altr
+andv
+angl
+anim
+anms
+appr
+apro
+asin
+aslp
+atan
+attn
+attr
+avel
+
+bang
+base
+bhvr
+bkds
+bkgd
+body
+boot
+born
+brmi
+buzz
+bvar
+byit
+cabb
+cabl
+cabn
+cabp
+cabr
+cabt
+cabv
+cabw
+cacl
+cage
+calc
+calg
+call
+caos
+carr
+cata
+cati
+cato
+catx
+char
+chem
+clac
+clik
+cmra
+cmrp
+cmrt
+cmrx
+cmry
+code
+codf
+codg
+codp
+cods
+core
+cos_
+crea
+
+date
+dayt
+dbg#
+dbga
+dcor
+dead
+decn
+dele
+delg
+delm
+deln
+delr
+delw
+dftx
+dfty
+dirn
+disq
+divv
+dmap
+doca
+doin
+done
+door
+down
+dpas
+drea
+driv
+drop
+drv!
+dsee
+
+eamn
+elas
+emid
+emit
+erid
+etik
+expr
+
+face
+fade
+fall
+fcus
+fdmp
+flto
+fltx
+flty
+fmly
+forf
+frat
+frel
+fric
+frmt
+frsh
+ftoi
+fvel
+fvwm
+
+gait
+gall
+gamn
+gmap
+gnam
+gnus
+goto
+gpas
+grap
+grid
+grpl
+grpv
+gtos
+
+hair
+hand
+heap
+held
+help
+hght
+hhld
+hirp
+hotp
+hots
+
+iitt
+imsk
+injr
+innf
+inni
+innl
+inok
+ins#
+itof
+
+ject
+
+keyd
+kill
+
+left
+like
+limb
+line
+link
+load
+loci
+lock
+loft
+lorp
+lowa
+ltcy
+
+mann
+mapd
+maph
+mapk
+mapw
+mate
+mclr
+memx
+meta
+midi
+mind
+mira
+mloc
+mmsc
+modu
+modv
+mont
+mopx
+mopy
+motr
+mous
+movs
+movx
+movy
+mows //LoL
+msec
+mthx
+mthy
+mtoa
+mtoc
+mulv
+mute
+mvby
+mvft
+mvsf
+mvto
+
+namn
+ncls
+negv
+newc
+nohh
+norn
+notv
+npgs
+nude
+nwld
+
+obst
+ooww
+orgf
+orgi
+orgn
+orrv
+outs
+outv
+outx
+over
+
+pace
+page
+part
+paus
+paws
+pcls
+perm
+plmd
+plmu
+plne
+pnxt
+posb
+pose
+posl
+posr
+post
+posx
+posy
+prop
+pswd
+ptxt
+puhl
+pupt
+pure
+
+quit
+
+race
+rand
+rate
+rclr
+read
+reaf
+rean
+reaq
+relx
+rely
+rgam
+rght
+rloc
+rmsc
+rnge
+room
+rotn
+rpas
+rtar
+rtif
+rtim
+rtyp
+save
+sayn
+scam
+scol
+scrx
+sdmp
+sean
+seee
+seen
+seta
+sets
+setv
+sezz
+show
+sins
+sin_
+snap
+snax
+sndc
+snde
+sndl
+sndw
+sorc
+sorq
+soul
+spas
+spcs
+spin
+spnl
+sqrt
+star
+step
+stof
+stoi
+stop
+stpc
+stpt
+strk
+strl
+subs
+subv
+svel
+
+tack
+tage
+tan_
+targ
+tcor
+tick
+time
+tino
+tint
+tmvb
+tmvf
+tmvt
+tntw
+torx
+tory
+totl
+touc
+tran
+trck
+ttar
+twin
+type
+
+ucln
+ufos
+uftx
+ufty
+uncs
+unid
+unlk
+uppa
+
+varc
+velo
+visi
+vmjr
+vmnr
+vocb
+voic
+vois
+volm
+vtos
+
+wait
+walk
+wall
+wdow
+wdth
+wear
+webb
+wild
+wnam
+wndb
+wndh
+wndl
+wndr
+wndt
+wndw
+wnti
+wolf
+wpau
+wrld
+wtik
+wtnt
+wuid
+
+
+year
+
+zomb
+zoom
+
+_it_
+_up_
+
