@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import rebound.exceptions.ImpossibleException;
-import rebound.io.TextIOUtilities;
+import rebound.io.util.TextIOUtilities;
 import rebound.jagent.lib.caos2pray.exc.C2PSyntaxException;
 import rebound.jagent.lib.caos2pray.exc.DependencyException;
 import rebound.jagent.lib.caos2pray.exc.NotIntegerTagException;

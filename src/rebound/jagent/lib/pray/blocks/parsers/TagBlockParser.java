@@ -8,7 +8,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import rebound.bits.Bytes;
-import rebound.io.JRECompatIOUtilities;
+import rebound.io.util.JRECompatIOUtilities;
 import rebound.jagent.lib.FormatMismatchException;
 import rebound.jagent.lib.pray.BlockHeader;
 import rebound.jagent.lib.pray.blocks.BlockParser;

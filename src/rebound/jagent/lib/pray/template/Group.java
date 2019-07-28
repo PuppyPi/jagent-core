@@ -13,7 +13,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
 import rebound.bits.Bytes;
-import rebound.io.JRECompatIOUtilities;
+import rebound.io.util.JRECompatIOUtilities;
 import rebound.jagent.lib.FormatMismatchException;
 import rebound.jagent.lib.PathBoss;
 

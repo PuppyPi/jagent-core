@@ -9,7 +9,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import rebound.io.JRECompatIOUtilities;
+import rebound.io.util.JRECompatIOUtilities;
 import rebound.jagent.lib.PathBoss;
 import rebound.jagent.lib.pray.BlockHeader;
 import rebound.jagent.lib.pray.blocks.BlockParser;

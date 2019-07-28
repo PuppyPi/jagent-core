@@ -13,10 +13,10 @@ import rebound.bits.Bytes;
 import rebound.bits.Endianness;
 import rebound.bits.Unsigned;
 import rebound.hci.graphics2d.ImageUtilities;
-import rebound.io.BasicIOUtilities;
-import rebound.io.RandomAccessFileWrapper;
 import rebound.io.iio.RandomAccessBytes;
+import rebound.io.iio.sio.RandomAccessFileWrapper;
 import rebound.io.iio.unions.CloseableFlushableRandomAccessBytesInterface;
+import rebound.io.util.BasicIOUtilities;
 import rebound.jagent.lib.FormatMismatchException;
 
 public class FromS16Converter

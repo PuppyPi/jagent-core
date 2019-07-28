@@ -14,7 +14,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import rebound.exceptions.ImpossibleException;
-import rebound.io.UniversalNewlineReader;
+import rebound.io.util.UniversalNewlineReader;
 
 /**
  * This parses CAOS files generally; it is not specific to C2P,

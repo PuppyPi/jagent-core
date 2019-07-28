@@ -17,10 +17,10 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import rebound.bits.Bytes;
 import rebound.bits.Unsigned;
-import rebound.io.BasicIOUtilities;
-import rebound.io.RandomAccessFileWrapper;
 import rebound.io.iio.RandomAccessBytes;
+import rebound.io.iio.sio.RandomAccessFileWrapper;
 import rebound.io.iio.unions.CloseableFlushableRandomAccessBytesInterface;
+import rebound.io.util.BasicIOUtilities;
 import rebound.jagent.lib.FormatMismatchException;
 import rebound.util.collections.ArrayUtilities;
 

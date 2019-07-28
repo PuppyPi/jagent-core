@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 import rebound.bits.Bytes;
-import rebound.io.FSIOUtilities;
+import rebound.io.util.FSIOUtilities;
 import rebound.jagent.lib.PathBoss;
 import rebound.jagent.lib.pray.BlockHeader;
 import rebound.jagent.lib.pray.InvalidNameException;

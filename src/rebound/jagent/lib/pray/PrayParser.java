@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.zip.InflaterInputStream;
 import rebound.bits.Bytes;
-import rebound.io.JRECompatIOUtilities;
+import rebound.io.util.JRECompatIOUtilities;
 import rebound.jagent.lib.FormatMismatchException;
 import rebound.jagent.lib.pray.blocks.MetaBlockParser;
 import rebound.jagent.lib.pray.template.PrayTemplate;

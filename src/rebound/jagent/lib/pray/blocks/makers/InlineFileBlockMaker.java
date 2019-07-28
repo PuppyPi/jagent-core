@@ -8,7 +8,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import rebound.io.JRECompatIOUtilities;
+import rebound.io.util.JRECompatIOUtilities;
 import rebound.jagent.lib.PathBoss;
 import rebound.jagent.lib.pray.BlockHeader;
 import rebound.jagent.lib.pray.InvalidNameException;
