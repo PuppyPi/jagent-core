@@ -20,16 +20,16 @@ public class PathBoss
 	
 	
 	
-	protected Map<Character, String> charactersToEscapePosix = CollectionUtilities.newmap(
+	protected Map<Character, String> charactersToEscapePosix = CollectionUtilities.mapof(
 			'/', "slash"
 			);
 	
-	protected Map<Character, String> charactersToEscapeMac = CollectionUtilities.newmap(
+	protected Map<Character, String> charactersToEscapeMac = CollectionUtilities.mapof(
 			'/', "slash",
 			':', "colon"
 			);
 	
-	protected Map<Character, String> charactersToEscapeWindows = CollectionUtilities.newmap(
+	protected Map<Character, String> charactersToEscapeWindows = CollectionUtilities.mapof(
 			'\\', "backslash",
 			'/', "slash",
 			':', "colon",
