@@ -27,7 +27,7 @@ public class Group
 	protected String name;
 	protected String dir; //Needs a trailing /
 	
-	protected Vector<String> scriptFiles; //needs .setSize()
+	protected Vector<String> scriptFiles; //needs .setSize()    //TODO Make this a List<String> storing the code in memory (who would ever be using this on a computer with less than, what, *a megabyte of ram*!? XD )
 	protected List<String> intTagNames;
 	protected List<String> strTagNames;
 	protected List<Integer> intTagVals;
