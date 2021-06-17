@@ -4,19 +4,25 @@
  */
 package rebound.jagent.lib.pray.blocks.makers;
 
+import static rebound.text.StringUtilities.*;
+import static rebound.util.objectutil.BasicObjectUtilities.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import rebound.bits.Bytes;
 import rebound.io.util.FSIOUtilities;
 import rebound.jagent.lib.PathBoss;
 import rebound.jagent.lib.pray.BlockHeader;
+import rebound.jagent.lib.pray.CaosUtilitiesForJagent;
+import rebound.jagent.lib.pray.CaosUtilitiesForJagent.CaosAndRemoveScript;
 import rebound.jagent.lib.pray.InvalidNameException;
 import rebound.jagent.lib.pray.blocks.MetaBlockMaker;
 import rebound.jagent.lib.pray.template.Group;
-import rebound.jagent.lib.pray.template.TagVal;
 
 public class TagBlockMaker
 {
@@ -28,8 +34,8 @@ public class TagBlockMaker
 			throw new InvalidNameException(g.getName(), "characters in the name are illegal on some platforms");
 		
 		BlockHeader b = new BlockHeader();
-		b.setId(g.getID().getBytes("ASCII"));
-		b.setName(g.getName());
+		b.setId(g.getID().getBytes(StandardCharsets.UTF_8));
+		b.setName(universalNewlines(g.getName()));
 		
 		
 		//Now we (more robustly, if more memory-expensive) calculate length by writing it to memory, simply getting the length, writing the block header, then dumping the already-written block contents data
@@ -42,7 +48,7 @@ public class TagBlockMaker
 		for (int i = 0; i < g.getIntValCount(); i++)
 		{
 			length += 4; //CSLen
-			length += g.getIntTagName(i).getBytes("ASCII").length; //CSVal
+			length += g.getIntTagName(i).getBytes(StandardCharsets.UTF_8).length; //CSVal
 			
 			length += 4; //val
 		}
@@ -52,23 +58,23 @@ public class TagBlockMaker
 		for (int i = 0; i < g.getStrValCount(); i++)
 		{
 			length += 4; //name.CSLen
-			length += g.getStrTagName(i).getBytes("ascii").length; //name.CSVal
+			length += g.getStrTagName(i).getBytes(StandardCharsets.UTF_8).length; //name.CSVal
 			
 			length += 4; //val.CSLen
-			length += g.getStrTagValue(i).getBytes("ascii").length; //val.CSVal
+			length += g.getStrTagValue(i).getBytes(StandardCharsets.UTF_8).length; //val.CSVal
 		}
 		
 		//Script(s)
 		if (g.hasScripts())
 		{
 			length += 4;
-			length += "Script Count".getBytes("ascii").length;
+			length += "Script Count".getBytes(StandardCharsets.UTF_8).length;
 			
 			length += 4; //Val
 			
 			
 			length += 4;
-			length += "Script 1".getBytes("ascii").length;
+			length += "Script 1".getBytes(StandardCharsets.UTF_8).length;
 			
 			length += 4;
 			length += g.getScriptsLength();
@@ -83,7 +89,7 @@ public class TagBlockMaker
 			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 			
 			
-			int scriptCount = isMergeScripts() ? (g.hasScripts() ? 1 : 0) : g.getScriptFiles().size();
+			int scriptCount = isMergeScripts() ? (g.hasScripts() ? 1 : 0) : g.getScriptFileNames().size();
 			
 			
 			//Int tags
@@ -121,14 +127,50 @@ public class TagBlockMaker
 				Bytes.putLittleInt(buffer, g.getStrValCount()+scriptCount); //Tag count
 				
 				
+				boolean mergingScripts = g.hasScripts() && isMergeScripts();
+				
+				Integer removeScriptTagIndex = null;
+				
 				//Normal str tags
 				for (int i = 0; i < g.getStrValCount(); i++)
 				{
-					//Str-tag name pstring
-					writeLString(buffer, g.getStrTagName(i));
+					String n = g.getStrTagName(i);
 					
-					//Str-tag value pstring
-					writeLString(buffer, g.getStrTagValue(i));
+					if (eq(n, "Remove script") && mergingScripts)
+					{
+						//Let it be handled below X3
+						removeScriptTagIndex = i;
+					}
+					else
+					{
+						//Str-tag name pstring
+						writeLString(buffer, n);
+						
+						//Str-tag value pstring
+						writeLString(buffer, g.getStrTagValue(i));
+					}
+				}
+				
+				
+				final File removeScriptFile = g.getRemoveScriptFile();
+				final String removeScriptFromFile = removeScriptFile == null ? null : FSIOUtilities.readAllText(removeScriptFile);
+				
+				if (removeScriptFromFile != null)
+				{
+					if (mergingScripts)
+					{
+						//Let it be handled below X3
+					}
+					else
+					{
+						//Whoever made the Group g should make sure not to add both remove script sources when not merging scripts otherwise there will be two "Remove script" tags!
+						
+						//Str-tag name pstring
+						writeLString(buffer, "Remove script");
+						
+						//Str-tag value pstring
+						writeLString(buffer, removeScriptFromFile);
+					}
 				}
 				
 				
@@ -138,74 +180,112 @@ public class TagBlockMaker
 					//The modern spec only supports one script entry, we must concatenate them ahead of time
 					if (isMergeScripts())
 					{
-						//Str-tag name pstring
-						writeLString(buffer, "Script 1");
+						final List<File> scriptFiles = g.getScriptFiles();
 						
-						List<File> scriptFiles = g.getScriptFilesAsFiles();
-						
-						//Predict the length
-						long predictedLength = 0;
+						final List<String> scripts;
 						{
-							for (int i = 0; i < scriptFiles.size(); i++)
-							{
-								File scriptFile = scriptFiles.get(i);
-								long length = scriptFile.length();
-								
-								predictedLength += length;
-								if (i < scriptFiles.size()-1)
-									predictedLength += 1; //the added space
-							}
+							scripts = new ArrayList<>();
+							for (File f : scriptFiles)
+								scripts.add(FSIOUtilities.readAllText(f));
 						}
 						
-						//Write it all out
+						final String wholeScript;
+						final String completeRemoveScript;
 						{
-							//Str-tag value pstring length integer
-							Bytes.putLittleInt(buffer, (int)predictedLength); //SAME HERE! xD
+							List<String> wholes = new ArrayList<>();
+							List<String> removes = new ArrayList<>();
 							
-							long actualTotalLength = 0;
+							if (removeScriptTagIndex != null)
+								removes.add(g.getStrTagValue(removeScriptTagIndex));
 							
-							//Str-tag value pstring text
-							for (int i = 0; i < scriptFiles.size(); i++)
+							removes.add(removeScriptFromFile);
+							
+							boolean first = true;
+							for (String script : scripts)
 							{
-								File scriptFile = scriptFiles.get(i);
-								long length = scriptFile.length();
+								CaosAndRemoveScript r = CaosUtilitiesForJagent.parse(script);
 								
-								long actualLength = FSIOUtilities.dumpFileToOutputStream(scriptFile, buffer);
-								actualTotalLength += actualLength;
+								if (!isAllWhitespace(r.otherCaos))
+									wholes.add(r.otherCaos);
 								
-								if (length != actualLength)
-									throw new IOException("File was not apparent length (appeared to be "+length+" bytes, but was actually "+actualLength+" bytes): "+scriptFile.getAbsolutePath());
-								
-								if (i < scriptFiles.size()-1)
+								if (!isAllWhitespace(r.removeScript))
 								{
-									buffer.write(' ');
-									actualTotalLength += 1;
+									if (!first || !g.getCutOutRemoveScriptFromFirstScript())
+										removes.add(r.removeScript);
 								}
+								
+								first = false;
 							}
 							
-							if (actualTotalLength != predictedLength)
-								throw new IOException("Files were not apparent length (predicted to be "+predictedLength+" bytes, but was actually "+actualTotalLength+" bytes)");
+							wholeScript = CaosUtilitiesForJagent.mergeCaosen(wholes);
+							completeRemoveScript = CaosUtilitiesForJagent.mergeCaosen(removes);
+						}
+						
+						
+						
+						//Main script!
+						{
+							//Str-tag name pstring
+							writeLString(buffer, "Script 1");
+							
+							//Str-tag value pstring
+							writeLString(buffer, wholeScript);
+						}
+						
+						//Remove script!
+						{
+							//Str-tag name pstring
+							writeLString(buffer, "Remove script");
+							
+							//Str-tag value pstring
+							writeLString(buffer, completeRemoveScript);
 						}
 					}
 					
 					//No merge; leave as individual scripts (I think this is necessary for something like the Norn Garden, which has rscr's in each script file; it seems to work with all the scripts (my multi-script agents never did though :P ))
 					else
 					{
-						List<File> scriptFiles = g.getScriptFilesAsFiles();
+						List<File> scriptFiles = g.getScriptFiles();
 						for (int i = 0; i < scriptFiles.size(); i++)
 						{
 							File scriptFile = scriptFiles.get(i);
-							long length = scriptFile.length();
+							
+							byte[] originalEncoding = FSIOUtilities.readAll(scriptFile);
+							
+							String script;
+							try
+							{
+								script = decodeTextToStringReporting(originalEncoding, StandardCharsets.UTF_8);
+							}
+							catch (CharacterCodingException exc)
+							{
+								System.err.println("Warning: malformed or non-UTF8 input at "+scriptFile.getAbsolutePath());
+								script = null;
+							}
+							
+							
+							byte[] newEncoding;
+							if (script != null)
+							{
+								if (g.getCutOutRemoveScriptFromFirstScript() && i == 0)
+								{
+									script = CaosUtilitiesForJagent.parse(script).otherCaos;
+								}
+								
+								newEncoding = script.getBytes(StandardCharsets.UTF_8);
+							}
+							else
+							{
+								newEncoding = originalEncoding;
+							}
+							
 							
 							//Str-tag name pstring
 							writeLString(buffer, "Script "+(i+1));
 							
 							//Str-tag value pstring
-							Bytes.putLittleInt(buffer, (int)length); //MUST CAST TO INT (32 BITS)!!  WILL TAKE DAYS TO DEBUG IF OVERLOADING IS FORGOTTEN!  xD
-							long actualLength = FSIOUtilities.dumpFileToOutputStream(scriptFile, buffer);
-							
-							if (length != actualLength)
-								throw new IOException("File was not apparent length (appeared to be "+length+" bytes, but was actually "+actualLength+" bytes): "+scriptFile.getAbsolutePath());
+							Bytes.putLittleInt(buffer, (int)newEncoding.length); //MUST CAST TO INT (32 BITS)!!  WILL TAKE DAYS TO DEBUG IF OVERLOADING IS FORGOTTEN!  xD
+							buffer.write(newEncoding);
 						}
 					}
 				}
@@ -230,17 +310,9 @@ public class TagBlockMaker
 		out.write(blockContents);
 	}
 	
-	protected void writeTagVal(OutputStream out, TagVal val) throws IOException
-	{
-		if (val.isStringTagVal())
-			writeLString(out, val.getStringValue());
-		else
-			Bytes.putLittleInt(out, val.getIntegerValue());
-	}
-	
 	protected void writeLString(OutputStream out, String str) throws IOException
 	{
-		byte[] bstr = str.getBytes("ascii");
+		byte[] bstr = universalNewlines(str).getBytes(StandardCharsets.UTF_8);
 		Bytes.putLittleInt(out, bstr.length);
 		out.write(bstr);
 	}

@@ -12,6 +12,7 @@ import java.io.Reader;
 import java.util.ArrayList;
 import rebound.io.util.TextIOUtilities;
 import rebound.jagent.lib.Cursor;
+import rebound.util.Either;
 
 public class TemplateParser
 {
@@ -36,7 +37,7 @@ public class TemplateParser
 		int tagPos = 0, tagType = 0;
 		Group currGroup = null;
 		String k = null;
-		TagVal v = null;
+		Either<Integer, String> v = null;
 		
 		while (true)
 		{
@@ -69,8 +70,8 @@ public class TemplateParser
 					{
 						if (k.startsWith("Script ") && k.length() > "Script ".length() && !k.substring("Script ".length()).equalsIgnoreCase("Count"))
 						{
-							if (v.getStringValue() != null)
-								currGroup.addScript(v.getStringValue());
+							if (v.getValueIfB() != null)
+								currGroup.addScript(v.getValueIfB());
 						}
 						else if (!k.equals("Script Count"))
 							currGroup.addTag(k, v);
@@ -93,11 +94,11 @@ public class TemplateParser
 				{
 					if
 					(
-						tagType == TAG_GROUP &&
-						(curr == 'r' || curr == 'R' && tagPos == 0) ||
-						(curr == 'o' || curr == 'O' && tagPos == 1) ||
-						(curr == 'u' || curr == 'U' && tagPos == 2) ||
-						(curr == 'p' || curr == 'P' && tagPos == 3)
+					tagType == TAG_GROUP &&
+					(curr == 'r' || curr == 'R' && tagPos == 0) ||
+					(curr == 'o' || curr == 'O' && tagPos == 1) ||
+					(curr == 'u' || curr == 'U' && tagPos == 2) ||
+					(curr == 'p' || curr == 'P' && tagPos == 3)
 					)
 					{
 						tagPos++;
@@ -112,12 +113,12 @@ public class TemplateParser
 					
 					else if
 					(
-						tagType == TAG_INLINE &&
-						(curr == 'n' || curr == 'N' && tagPos == 0) ||
-						(curr == 'l' || curr == 'L' && tagPos == 1) ||
-						(curr == 'i' || curr == 'I' && tagPos == 2) ||
-						(curr == 'n' || curr == 'N' && tagPos == 3) ||
-						(curr == 'e' || curr == 'E' && tagPos == 4)
+					tagType == TAG_INLINE &&
+					(curr == 'n' || curr == 'N' && tagPos == 0) ||
+					(curr == 'l' || curr == 'L' && tagPos == 1) ||
+					(curr == 'i' || curr == 'I' && tagPos == 2) ||
+					(curr == 'n' || curr == 'N' && tagPos == 3) ||
+					(curr == 'e' || curr == 'E' && tagPos == 4)
 					)
 					{
 						tagPos++;
@@ -141,7 +142,7 @@ public class TemplateParser
 		template.groups = groups;
 	}
 	
-//	Data cursor must be after first (-
+	//	Data cursor must be after first (-
 	protected void finishComment(Cursor c) throws IOException
 	{
 		char curr = 0;
@@ -160,7 +161,7 @@ public class TemplateParser
 	}
 	
 	//Data cursor must be before first " of string
-	protected TagVal readKnownTagVal(Cursor c) throws IOException
+	protected Either<Integer, String> readKnownTagVal(Cursor c) throws IOException
 	{
 		boolean stringVal = true;
 		boolean inTheQuotes = false;
@@ -186,7 +187,7 @@ public class TemplateParser
 				if (!stringVal && !(curr == '0' || curr == '1' || curr == '2' || curr == '3' || curr == '4' || curr == '5' || curr == '6' || curr == '7' || curr == '8' || curr == '9'))
 				{
 					//End of # val
-					return new TagVal(Integer.parseInt(string.toString()));
+					return Either.forA(Integer.parseInt(string.toString()));
 				}
 				else if (!inTheQuotes && curr == '"')
 					inTheQuotes = true;
@@ -212,14 +213,17 @@ public class TemplateParser
 					if (curr == '\\')
 						lastWasEscape = true;
 					else if (curr == '"')
-						return new TagVal(string.toString());
+						return Either.forB(string.toString());
 					else
 						string.append(curr);
 				}
 			}
 		}
-		return stringVal ? new TagVal(string.toString()) : new TagVal(Integer.parseInt(string.toString()));
+		
+		return stringVal ? Either.forB(string.toString()) : Either.forA(Integer.parseInt(string.toString()));
 	}
+	
+	
 	
 	//Data cursor must be before first " of string
 	protected String readKnownQuoted(Cursor c) throws IOException

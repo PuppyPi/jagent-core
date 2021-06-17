@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import rebound.bits.Bytes;
 import rebound.jagent.lib.pray.BlockHeader;
 import rebound.jagent.lib.pray.InvalidNameException;
@@ -75,7 +76,7 @@ public class MetaBlockMaker
 		out.write(b.getId());
 		
 		//Name
-		byte[] name = b.getName().getBytes("ascii");
+		byte[] name = b.getName().getBytes(StandardCharsets.UTF_8);
 		byte[] fullname = new byte[128];
 		System.arraycopy(name, 0, fullname, 0, Math.min(name.length, 127)); //There must be at least one terminating 0 for spec compatibility
 		out.write(fullname);

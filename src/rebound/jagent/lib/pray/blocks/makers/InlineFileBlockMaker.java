@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import rebound.io.util.JRECompatIOUtilities;
 import rebound.jagent.lib.PathBoss;
 import rebound.jagent.lib.pray.BlockHeader;
@@ -26,7 +27,7 @@ public class InlineFileBlockMaker
 		header.setOriginalLength((int)sourceFile.length());
 		header.setLengthInFile((int)sourceFile.length());
 		header.setName(prayFilename);
-		header.setId(prayID.getBytes("ASCII"));
+		header.setId(prayID.getBytes(StandardCharsets.UTF_8));
 		
 		MetaBlockMaker.writeHeader(out, header);
 		

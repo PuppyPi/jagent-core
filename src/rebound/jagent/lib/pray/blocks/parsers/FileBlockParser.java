@@ -4,11 +4,13 @@
  */
 package rebound.jagent.lib.pray.blocks.parsers;
 
+import static rebound.text.StringUtilities.*;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import rebound.io.util.JRECompatIOUtilities;
 import rebound.jagent.lib.PathBoss;
 import rebound.jagent.lib.pray.BlockHeader;
@@ -94,7 +96,7 @@ implements BlockParser
 				exc.printStackTrace();
 			}
 			
-			throw new EOFException("Premature EOF detected in "+b.getIdText()+" block \""+b.getName()+"\", correct length is specified to be "+fileLength+", actual length in file is "+actual+".    Most likely the file was truncated somehow (eg, incomplete download).");
+			throw new EOFException("Premature EOF detected in "+b.getIdTextBestEffort()+" block \""+b.getName()+"\", correct length is specified to be "+fileLength+", actual length in file is "+actual+".    Most likely the file was truncated somehow (eg, incomplete download).");
 		}
 		else
 		{
@@ -102,7 +104,7 @@ implements BlockParser
 		}
 		
 		
-		template.addInline(new String(b.getId(), "ASCII"), file.getName(), b.getName());
+		template.addInline(decodeTextToStringReporting(b.getId(), StandardCharsets.UTF_8), file.getName(), b.getName());
 	}
 	
 	public boolean canHandle(BlockHeader b)

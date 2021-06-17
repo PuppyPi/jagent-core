@@ -4,9 +4,13 @@
  */
 package rebound.jagent.lib.pray.blocks.parsers;
 
+import static rebound.text.StringUtilities.*;
+import static rebound.util.objectutil.BasicObjectUtilities.*;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.StandardCharsets;
 import rebound.bits.Bytes;
 import rebound.io.util.JRECompatIOUtilities;
 import rebound.jagent.lib.FormatMismatchException;
@@ -14,6 +18,7 @@ import rebound.jagent.lib.pray.BlockHeader;
 import rebound.jagent.lib.pray.blocks.BlockParser;
 import rebound.jagent.lib.pray.template.Group;
 import rebound.jagent.lib.pray.template.PrayTemplate;
+import rebound.text.StringUtilities;
 
 public class TagBlockParser
 implements BlockParser
@@ -23,7 +28,7 @@ implements BlockParser
 		Group g = new Group();
 		template.addGroup(g); //Let the template configure it a bit
 		
-		g.setID(new String(b.getId(), "ASCII"));
+		g.setID(decodeTextToStringReporting(b.getId(), StandardCharsets.UTF_8));
 		g.setName(b.getName());
 		
 		int intTagCount = Bytes.getLittleInt(data);
@@ -53,12 +58,37 @@ implements BlockParser
 				int scriptNumber = Group.getScriptNumber(name);
 				if (scriptNumber != 1)
 					hasOtherScripts = true;
-				g.writeScriptToFile(data, scriptNumber);
+				
+				int len = Bytes.getLittleInt(data);
+				
+				byte[] encoded = new byte[len];
+				JRECompatIOUtilities.readFully(data, encoded);
+				
+				String script;
+				try
+				{
+					script = StringUtilities.decodeTextToStringReporting(encoded, StandardCharsets.UTF_8);
+				}
+				catch (CharacterCodingException exc)
+				{
+					System.err.println("Warning: malformed or non-UTF8 input on tag " +repr(name));
+					script = null;
+					
+					g.writeRawScriptToFile(encoded, scriptNumber);
+				}
+				
+				if (script != null)
+					g.writeScriptToFile(script, scriptNumber);
 			}
 			else
 			{
 				sval = readLString(data);
 				g.addStringTag(name, sval);
+				
+				if (eq(name, "Remove script"))  //This is case sensitive in Creatures, so it is here too!!
+				{
+					g.writeRemoveScriptToFile(sval);
+				}
 			}
 		}
 		
@@ -75,7 +105,7 @@ implements BlockParser
 		int len = Bytes.getLittleInt(in);
 		byte[] raw = new byte[len];
 		JRECompatIOUtilities.readFully(in, raw);
-		return new String(raw, "ascii");
+		return universalNewlines(decodeTextToStringReporting(raw, StandardCharsets.UTF_8));
 	}
 	
 	
@@ -85,15 +115,15 @@ implements BlockParser
 		//TODO allow configurability by the user :>  (eg, from a text file placed next to the .jar or in their home folder for overrides :> )
 		
 		return
-			b.getID() == BlockHeader.ID_AGNT ||
-			b.getID() == BlockHeader.ID_DSAG ||
-			b.getID() == BlockHeader.ID_LIVE ||
-			b.getID() == BlockHeader.ID_EGGS ||
-			b.getID() == BlockHeader.ID_SFAM ||
-			b.getID() == BlockHeader.ID_DFAM ||
-			b.getID() == BlockHeader.ID_EXPC ||
-			b.getID() == BlockHeader.ID_DSEX ||
-			
-			b.getID() == BlockHeader.ID_DSGB;
+		b.getID() == BlockHeader.ID_AGNT ||
+		b.getID() == BlockHeader.ID_DSAG ||
+		b.getID() == BlockHeader.ID_LIVE ||
+		b.getID() == BlockHeader.ID_EGGS ||
+		b.getID() == BlockHeader.ID_SFAM ||
+		b.getID() == BlockHeader.ID_DFAM ||
+		b.getID() == BlockHeader.ID_EXPC ||
+		b.getID() == BlockHeader.ID_DSEX ||
+		
+		b.getID() == BlockHeader.ID_DSGB;
 	}
 }

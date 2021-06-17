@@ -4,8 +4,8 @@
  */
 package rebound.jagent.lib.pray;
 
-import java.io.UnsupportedEncodingException;
-import rebound.exceptions.ImpossibleException;
+import static rebound.text.StringUtilities.*;
+import java.nio.charset.StandardCharsets;
 
 
 /**
@@ -101,19 +101,10 @@ public class BlockHeader
 		return this.id;
 	}
 	
-	public String getIdText()
+	public String getIdTextBestEffort()
 	{
 		if (sId == null)
-		{
-			try
-			{
-				sId = new String(id, "ASCII");
-			}
-			catch (UnsupportedEncodingException exc)
-			{
-				throw new ImpossibleException("No ASCII?!", exc);
-			}
-		}
+			sId = decodeTextToStringReplacing(id, StandardCharsets.UTF_8);
 		
 		return sId;
 	}

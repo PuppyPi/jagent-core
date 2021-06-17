@@ -8,11 +8,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import rebound.exceptions.ImpossibleException;
 import rebound.io.util.TextIOUtilities;
 import rebound.jagent.lib.caos2pray.exc.C2PSyntaxException;
 import rebound.jagent.lib.caos2pray.exc.DependencyException;
@@ -275,19 +274,10 @@ public class TemplateConverter
 				
 				//Check validity of name
 				{
-					byte[] asciiname = null;
+					byte[] encodedName = name.getBytes(StandardCharsets.UTF_8);
 					
-					try
-					{
-						asciiname = name.getBytes("ASCII");
-					}
-					catch (UnsupportedEncodingException exc)
-					{
-						throw new ImpossibleException("ASCII Unsupported?!", exc);
-					}
-					
-					if (asciiname.length >= 127) //127 is the max not 128 because of the c-string null terminator
-						throw new C2PSyntaxException("Invalid name, 127 ascii characters is the maximum for a PRAY block name (name was "+asciiname.length+"; \""+name+"\")");
+					if (encodedName.length >= 127) //127 is the max not 128 because of the c-string null terminator
+						throw new C2PSyntaxException("Invalid name, 127 bytes is the maximum for a PRAY block name (name was "+encodedName.length+"; \""+name+"\")");
 				}
 				
 				template.addGroup(makeTheGenericBlock(c2PCosFile, dir, id, name));
@@ -362,6 +352,8 @@ public class TemplateConverter
 		//Scripts
 		{
 			g.addScript(c2p.getThisFile().getName());
+			g.setCutOutRemoveScriptFromFirstScript(true);
+			
 			for (int index : c2p.findCommands("link"))
 				for (String arg : c2p.getCommandArgs(index))
 					g.addScript(arg);

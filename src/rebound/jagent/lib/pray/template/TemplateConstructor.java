@@ -61,15 +61,15 @@ public class TemplateConstructor
 			//I just put a pointer in (@ script1.cos), the block parser already dumped the script into a cos file
 			
 			out.write("\"Script Count\" ");
-			out.write(Integer.toString(g.getScriptFiles().size()));
+			out.write(Integer.toString(g.getScriptFileNames().size()));
 			out.write("\n");
 			
-			for (int i = 0; i < g.getScriptFiles().size(); i++)
+			for (int i = 0; i < g.getScriptFileNames().size(); i++)
 			{
 				out.write("\"Script ");
 				out.write(Integer.toString(i+1));
 				out.write("\" @ \"");
-				writeEscaped(g.getScriptFiles().get(i));
+				writeEscaped(g.getScriptFileNames().get(i));
 				out.write("\"\n");
 			}
 			

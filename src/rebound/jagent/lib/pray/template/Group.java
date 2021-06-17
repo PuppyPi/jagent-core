@@ -5,17 +5,17 @@
 package rebound.jagent.lib.pray.template;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
-import rebound.bits.Bytes;
-import rebound.io.util.JRECompatIOUtilities;
+import javax.annotation.Nullable;
+import rebound.io.util.FSIOUtilities;
 import rebound.jagent.lib.FormatMismatchException;
 import rebound.jagent.lib.PathBoss;
+import rebound.text.StringUtilities;
+import rebound.util.Either;
 
 /**
  * This corresponds to a tag block.
@@ -27,11 +27,13 @@ public class Group
 	protected String name;
 	protected String dir; //Needs a trailing /
 	
-	protected Vector<String> scriptFiles; //needs .setSize()    //TODO Make this a List<String> storing the code in memory (who would ever be using this on a computer with less than, what, *a megabyte of ram*!? XD )
+	protected Vector<String> scriptFileNames; //needs .setSize()    //TODO Make this a List<String> storing the code in memory (who would ever be using this on a computer with less than, what, *a megabyte of ram*!? XD )
+	protected boolean cutOutRemoveScriptFromFirstScript = false;  //TODO this is such a kludge x'D
 	protected List<String> intTagNames;
 	protected List<String> strTagNames;
 	protected List<Integer> intTagVals;
 	protected List<String> strTagVals;
+	protected @Nullable String removeScriptFilename;
 	
 	public Group()
 	{
@@ -40,7 +42,7 @@ public class Group
 		intTagVals = new ArrayList<Integer>();
 		strTagNames = new ArrayList<String>();
 		strTagVals = new ArrayList<String>();
-		scriptFiles = new Vector<String>();
+		scriptFileNames = new Vector<String>();
 	}
 	
 	
@@ -48,6 +50,8 @@ public class Group
 	@Override
 	public boolean equals(Object obj)
 	{
+		//TODO hashCode()!! x"D
+		
 		if (obj == this)
 			return true;
 		if (obj == null || !(obj instanceof Group))
@@ -59,9 +63,10 @@ public class Group
 		eq(ID, o.ID) &&
 		eq(name, o.name) &&
 		
-		eq(scriptFiles, o.scriptFiles) && //this one *is* order-dependent
+		eq(scriptFileNames, o.scriptFileNames) && //this one *is* order-dependent
 		mapeq(this.intTagNames, this.intTagVals, o.intTagNames, o.intTagVals) &&
-		mapeq(this.strTagNames, this.strTagVals, o.strTagNames, o.strTagVals);
+		mapeq(this.strTagNames, this.strTagVals, o.strTagNames, o.strTagVals) &&
+		eq(removeScriptFilename, removeScriptFilename);
 	}
 	
 	private static boolean eq(Object a, Object b)
@@ -98,15 +103,15 @@ public class Group
 	}	
 	
 	
-	public void addTag(String key, TagVal val)
+	public void addTag(String key, Either<Integer, String> val)
 	{
-		if (val.isIntegerTagVal())
+		if (val.isA())
 		{
-			addIntTag(key, val.getIntegerValue());
+			addIntTag(key, val.getValueIfA());
 		}
 		else
 		{
-			addStringTag(key, val.getStringValue());
+			addStringTag(key, val.getValueIfB());
 		}
 	}
 	
@@ -145,7 +150,7 @@ public class Group
 	
 	public void addScript(String file)
 	{
-		scriptFiles.add(file);
+		scriptFileNames.add(file);
 	}
 	
 	public String getID()
@@ -211,40 +216,60 @@ public class Group
 	
 	public boolean hasScripts()
 	{
-		return scriptFiles.size() > 0;
+		return scriptFileNames.size() > 0;
 	}
 	
-	public List<String> getScriptFiles()
+	public boolean getCutOutRemoveScriptFromFirstScript()
 	{
-		return this.scriptFiles;
+		return cutOutRemoveScriptFromFirstScript;
+	}
+	
+	public void setCutOutRemoveScriptFromFirstScript(boolean cutOutRemoveScriptFromFirstScript)
+	{
+		this.cutOutRemoveScriptFromFirstScript = cutOutRemoveScriptFromFirstScript;
+	}
+	
+	public List<String> getScriptFileNames()
+	{
+		return this.scriptFileNames;
 	}
 	
 	/**
 	 * Instantiate a List of java.io.File's
 	 */
-	public List<File> getScriptFilesAsFiles()
+	public List<File> getScriptFiles()
 	{
-		List<File> files = new ArrayList<File>(scriptFiles.size());
-		for (String name : scriptFiles)
+		List<File> files = new ArrayList<File>(scriptFileNames.size());
+		for (String name : scriptFileNames)
 			files.add(new File(dir, name));
 		return files;
 	}
 	
+	public @Nullable String getRemoveScriptFilename()
+	{
+		return removeScriptFilename;
+	}
+	
+	public @Nullable File getRemoveScriptFile()
+	{
+		return removeScriptFilename == null ? null : new File(dir, removeScriptFilename);
+	}
+	
 	
 	/**
-	 * Call this after {@link #writeScriptToFile(InputStream, int) writing} all the scripts if you realize that there was only one script.
+	 * Call this after {@link #writeScriptToFile(String, int) writing} all the scripts if you realize that there was only one script.
 	 */
 	public void recognizeSingletonScript()
 	{
 		//Rename the "Foo script 1.cos" file to "Foo script.cos"
 		
-		if (scriptFiles.size() == 1)
+		if (scriptFileNames.size() == 1)
 		{
 			File oldScriptFile = getIndexedScriptFileName(1);
 			
 			//Even if the file is erroneous and has only one script with a number > 1, the writeScriptToFile() method shouldn't store it in position [0]
-			if (!scriptFiles.get(0).equals(oldScriptFile.getName()))
-				throw new AssertionError("Internal Inconsistency: #wSTF=\""+scriptFiles.get(0)+"\"     #rSS=\""+oldScriptFile.getName()+"\"");
+			if (!scriptFileNames.get(0).equals(oldScriptFile.getName()))
+				throw new AssertionError("Internal Inconsistency: #wSTF=\""+scriptFileNames.get(0)+"\"     #rSS=\""+oldScriptFile.getName()+"\"");
 			
 			File newScriptFile = getSingletonScriptFileName();
 			
@@ -252,12 +277,31 @@ public class Group
 			
 			if (success)
 			{
-				scriptFiles.set(0, newScriptFile.getName());
+				scriptFileNames.set(0, newScriptFile.getName());
 			}
 		}
 	}
 	
-	public void writeScriptToFile(InputStream scriptData, int scriptNumber) throws IOException, FormatMismatchException
+	public void writeRemoveScriptToFile(String scriptData) throws IOException, FormatMismatchException
+	{
+		File f = getRemoveScriptFileName();
+		
+		writeToCosFile(scriptData, f);
+		
+		removeScriptFilename = f.getName();
+	}
+	
+	public void writeScriptToFile(String scriptData, int scriptNumber) throws IOException, FormatMismatchException
+	{
+		_writeScriptToFile(scriptData, scriptNumber);
+	}
+	
+	public void writeRawScriptToFile(byte[] scriptData, int scriptNumber) throws IOException, FormatMismatchException
+	{
+		_writeScriptToFile(scriptData, scriptNumber);
+	}
+	
+	protected void _writeScriptToFile(Object scriptData, int scriptNumber) throws IOException, FormatMismatchException
 	{
 		//Make some file, deposit the script in it, then tell the group what it's called
 		
@@ -265,31 +309,38 @@ public class Group
 			throw new FormatMismatchException("Invalid script number: "+scriptNumber+"   for block \""+this.getName()+"\"");
 		
 		//Check if we already did this script number
-		if (scriptNumber <= scriptFiles.size())
-			if (scriptFiles.get(scriptNumber-1) != null)
+		if (scriptNumber <= scriptFileNames.size())
+			if (scriptFileNames.get(scriptNumber-1) != null)
 				throw new FormatMismatchException("Duplicate scripts at \"Script "+scriptNumber+"\"   for block \""+this.getName()+"\"");
 		
-		File f = null;
+		File f = getIndexedScriptFileName(scriptNumber);
+		
+		writeToCosFile(scriptData, f);
+		
+		if (scriptNumber > scriptFileNames.size())
+			scriptFileNames.setSize(scriptNumber);
+		scriptFileNames.set((scriptNumber-1), f.getName());
+	}
+	
+	protected void writeToCosFile(Object scriptData, File f) throws IOException, FormatMismatchException
+	{
+		if (f.exists())
 		{
-			f = getIndexedScriptFileName(scriptNumber);
-			
-			if (f.exists())
-			{
-				System.err.println("Script file exists: "+f.getAbsolutePath());
-				throw new IOException("Script file exists: "+f.getName());
-			}
+			System.err.println("Script file exists: "+f.getAbsolutePath());
+			throw new IOException("Script file exists: "+f.getName());
 		}
 		
-		FileOutputStream out = new FileOutputStream(f);
-		
-		int len = Bytes.getLittleInt(scriptData);
-		JRECompatIOUtilities.pumpFixed(scriptData, out, len);
-		
-		if (scriptNumber > scriptFiles.size())
-			scriptFiles.setSize(scriptNumber);
-		scriptFiles.set((scriptNumber-1), f.getName());
-		
-		out.close();
+		if (scriptData instanceof String)
+		{
+			String d = (String) scriptData;
+			d = StringUtilities.universalNewlines(d);  //for consistency with praysource.txt!
+			FSIOUtilities.writeAllText(f, d);
+		}
+		else
+		{
+			byte[] d = (byte[]) scriptData;
+			FSIOUtilities.writeAll(f, d);
+		}
 	}
 	
 	protected File getIndexedScriptFileName(int scriptNumber)
@@ -300,6 +351,11 @@ public class Group
 	protected File getSingletonScriptFileName()
 	{
 		return new File(dir, PathBoss.getInstance().getEscapedNameOnCurrentHostOS(this.getName()+" script.cos"));
+	}
+	
+	protected File getRemoveScriptFileName()
+	{
+		return new File(dir, PathBoss.getInstance().getEscapedNameOnCurrentHostOS(this.getName()+" remove script.cos"));
 	}
 	
 	
