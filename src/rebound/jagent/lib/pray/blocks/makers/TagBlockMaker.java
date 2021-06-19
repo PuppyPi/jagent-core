@@ -5,6 +5,7 @@
 package rebound.jagent.lib.pray.blocks.makers;
 
 import static rebound.text.StringUtilities.*;
+import static rebound.util.collections.CollectionUtilities.*;
 import static rebound.util.objectutil.BasicObjectUtilities.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -200,6 +201,8 @@ public class TagBlockMaker
 							
 							removes.add(removeScriptFromFile);
 							
+							List<String> removeScriptsInGivenOrder = new ArrayList<>(scripts.size());
+							
 							boolean first = true;
 							for (String script : scripts)
 							{
@@ -211,11 +214,13 @@ public class TagBlockMaker
 								if (!isAllWhitespace(r.removeScript))
 								{
 									if (!first || !g.getCutOutRemoveScriptFromFirstScript())
-										removes.add(r.removeScript);
+										removeScriptsInGivenOrder.add(r.removeScript);
 								}
 								
 								first = false;
 							}
+							
+							removes.addAll(reversed(removeScriptsInGivenOrder));
 							
 							wholeScript = CaosUtilitiesForJagent.mergeCaosen(wholes);
 							completeRemoveScript = CaosUtilitiesForJagent.mergeCaosen(removes);

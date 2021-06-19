@@ -6,7 +6,5 @@ package rebound.jagent.lib.pray;
 
 public interface PrayMakerNotifee
 {
-	public void startWritingPray();
 	public void finWritingBlock(int index);
-	public void finWritingPray();
 }

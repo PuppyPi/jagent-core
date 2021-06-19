@@ -5,22 +5,29 @@
 package rebound.jagent.lib.pray;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 import rebound.jagent.lib.pray.blocks.MetaBlockMaker;
+import rebound.jagent.lib.pray.blocks.makers.InlineFileBlockMaker;
+import rebound.jagent.lib.pray.blocks.makers.TagBlockMaker;
+import rebound.jagent.lib.pray.template.Group;
 import rebound.jagent.lib.pray.template.PrayTemplate;
 
 public class PrayMaker
 {
+	protected InlineFileBlockMaker fileBlockMaker = new InlineFileBlockMaker();
+	protected TagBlockMaker tagBlockMaker = new TagBlockMaker();
+	
 	protected OutputStream out;
-	protected MetaBlockMaker baker;
+	protected int overallIndex = 0;
 	protected PrayMakerNotifee notifee;
+	
 	
 	public PrayMaker()
 	{
 		super();
-		baker = new MetaBlockMaker();
 	}
 	
 	public PrayMaker(PrayMakerNotifee n)
@@ -29,34 +36,62 @@ public class PrayMaker
 		notifee = n;
 	}
 	
-	public void make() throws IOException, InvalidNameException
+	public void start() throws IOException
 	{
-		if (notifee != null) notifee.startWritingPray();
-		
 		//Magic number
 		out.write(PrayParser.PRAYMAGIC);
 		
-		int index = 0;
-		
-		for (int i = 0; i < baker.getTagCount(); i++)
+		overallIndex = 0;
+	}
+	
+	public void writePrayTemplate(PrayTemplate template) throws IOException, InvalidNameException
+	{
+		//Tag blocks
+		int n = template.getGroupCount();
+		for (int i = 0; i < n; i++)
 		{
-			baker.writeTagBlock(out, i);
-			if (notifee != null) notifee.finWritingBlock(index);
-			index++;
+			Group g = template.getGroup(i);
+			tagBlockMaker.make(out, g);
+			
+			if (notifee != null) notifee.finWritingBlock(overallIndex);
+			overallIndex++;
 		}
 		
-		String[] FILEsrcs = baker.getInlineFilesSources();
+		String[] FILEsrcs = template.getInlineSourcefiles();
 		for (int i = 0; i < FILEsrcs.length; i++)
 		{
-			baker.writeInlineFile(out, FILEsrcs[i]);
-			if (notifee != null) notifee.finWritingBlock(index);
-			index++;
+			String source = FILEsrcs[i];
+			
+			File src = new File(template.getDir().getPath()+'/'+source);
+			if (!src.exists())
+				throw new FileNotFoundException("Inline File \""+source+"\" not found!");
+			
+			fileBlockMaker.make(out, src, template.getInlineFilePrayID(source), template.getInlineFilePrayName(source));
+			
+			if (notifee != null) notifee.finWritingBlock(overallIndex);
+			overallIndex++;
 		}
-		
-		out.close(); //Todo this really should be flushed and closed by the caller
-		
-		if (notifee != null) notifee.finWritingPray();
 	}
+	
+	public void writeLowlevelBlocks(List<Block> blocks) throws IOException
+	{
+		for (Block b : blocks)
+		{
+			writeLowlevelBlock(b);
+		}
+	}
+	
+	public void writeLowlevelBlock(Block block) throws IOException
+	{
+		//Write header
+		MetaBlockMaker.writeHeader(out, block.getHeader());
+		
+		//Write contents
+		out.write(block.getData());
+	}
+	
+	
+	
 	
 	public static void makeSimply(List<Block> blocks, OutputStream out) throws IOException
 	{
@@ -73,6 +108,11 @@ public class PrayMaker
 		}
 	}
 	
+	
+	
+	
+	
+	
 	public void setOut(OutputStream out)
 	{
 		this.out = out;
@@ -85,27 +125,6 @@ public class PrayMaker
 	
 	
 	
-	public int getBlockCount()
-	{
-		return baker.getCount();
-	}
-	
-	public void setPrayTemplate(PrayTemplate prayTemplate)
-	{
-		baker.setPrayTemplate(prayTemplate);
-	}
-	
-	public void setDir(File dir)
-	{
-		baker.getPrayTemplate().setDir(dir);
-	}
-	
-	public File getDir()
-	{
-		return baker.getPrayTemplate().getDir();
-	}
-	
-	
 	
 	
 	
@@ -114,11 +133,11 @@ public class PrayMaker
 	//Settings
 	public boolean isMergeScripts()
 	{
-		return baker.isMergeScripts();
+		return tagBlockMaker.isMergeScripts();
 	}
 	
 	public void setMergeScripts(boolean value)
 	{
-		baker.setMergeScripts(value);
+		tagBlockMaker.setMergeScripts(value);
 	}
 }

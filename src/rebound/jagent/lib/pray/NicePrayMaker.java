@@ -31,13 +31,11 @@ extends PrayMaker
 			template = parser.getTemplate();
 		}
 		
-		PrayTemplate t = template;
-		setPrayTemplate(t);
-		
 		FileOutputStream out = new FileOutputStream(destination);
 		setOut(out);
 		
-		make();
+		start();
+		writePrayTemplate(template);
 		
 		out.close();
 	}
