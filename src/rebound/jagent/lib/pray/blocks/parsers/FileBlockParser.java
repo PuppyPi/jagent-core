@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import rebound.io.util.JRECompatIOUtilities;
 import rebound.jagent.lib.PathBoss;
 import rebound.jagent.lib.pray.BlockHeader;
+import rebound.jagent.lib.pray.JagentRecognizedPrayChunkBlockIds;
 import rebound.jagent.lib.pray.blocks.BlockParser;
 import rebound.jagent.lib.pray.template.PrayTemplate;
 
@@ -28,7 +29,7 @@ implements BlockParser
 			String preferredFilename = null;
 			{
 				preferredFilename = b.getName();
-				if (b.getID() == BlockHeader.ID_PHOT && preferredFilename.endsWith(".photo"))
+				if (JagentRecognizedPrayChunkBlockIds.lookup(b.getId()) == JagentRecognizedPrayChunkBlockIds.PHOT && preferredFilename.endsWith(".photo"))
 					//replace ".photo" with ".s16"
 					preferredFilename = preferredFilename.substring(0, preferredFilename.length()-6)+".s16";
 				
@@ -109,6 +110,10 @@ implements BlockParser
 	
 	public boolean canHandle(BlockHeader b)
 	{
-		return b.getID() == BlockHeader.ID_FILE || b.getID() == BlockHeader.ID_PHOT;
+		JagentRecognizedPrayChunkBlockIds id = JagentRecognizedPrayChunkBlockIds.lookup(b.getId());
+		
+		return
+		id == JagentRecognizedPrayChunkBlockIds.FILE ||
+		id == JagentRecognizedPrayChunkBlockIds.PHOT;
 	}
 }

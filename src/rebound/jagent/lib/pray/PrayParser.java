@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.zip.DeflaterInputStream;
 import java.util.zip.InflaterInputStream;
 import rebound.bits.Bytes;
 import rebound.io.util.JRECompatIOUtilities;
@@ -208,6 +209,11 @@ public class PrayParser
 	public static InputStream newInflaterInputStream(InputStream in)
 	{
 		return new InflaterInputStream(in);  //Isn't it nice that Java already supports the exact right format?  :D
+	}
+	
+	public static InputStream newDeflaterInputStream(InputStream in)
+	{
+		return new DeflaterInputStream(in);  //Isn't it nice that Java already supports the exact right format?  :D
 	}
 	
 	

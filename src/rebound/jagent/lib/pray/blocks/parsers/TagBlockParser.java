@@ -15,6 +15,7 @@ import rebound.bits.Bytes;
 import rebound.io.util.JRECompatIOUtilities;
 import rebound.jagent.lib.FormatMismatchException;
 import rebound.jagent.lib.pray.BlockHeader;
+import rebound.jagent.lib.pray.JagentRecognizedPrayChunkBlockIds;
 import rebound.jagent.lib.pray.blocks.BlockParser;
 import rebound.jagent.lib.pray.template.Group;
 import rebound.jagent.lib.pray.template.PrayTemplate;
@@ -114,16 +115,20 @@ implements BlockParser
 		//Todo blacklist blocks instead of whitelisting??  (ie, what is the behavior of 'unknown' block id's; assume they're tag blocks or something else or assume nothing? :> )
 		//TODO allow configurability by the user :>  (eg, from a text file placed next to the .jar or in their home folder for overrides :> )
 		
-		return
-		b.getID() == BlockHeader.ID_AGNT ||
-		b.getID() == BlockHeader.ID_DSAG ||
-		b.getID() == BlockHeader.ID_LIVE ||
-		b.getID() == BlockHeader.ID_EGGS ||
-		b.getID() == BlockHeader.ID_SFAM ||
-		b.getID() == BlockHeader.ID_DFAM ||
-		b.getID() == BlockHeader.ID_EXPC ||
-		b.getID() == BlockHeader.ID_DSEX ||
+		JagentRecognizedPrayChunkBlockIds id = JagentRecognizedPrayChunkBlockIds.lookup(b.getId());
 		
-		b.getID() == BlockHeader.ID_DSGB;
+		return
+		id == JagentRecognizedPrayChunkBlockIds.AGNT ||
+		id == JagentRecognizedPrayChunkBlockIds.DSAG ||
+		id == JagentRecognizedPrayChunkBlockIds.LIVE ||
+		id == JagentRecognizedPrayChunkBlockIds.EGGS ||
+		id == JagentRecognizedPrayChunkBlockIds.SFAM ||
+		id == JagentRecognizedPrayChunkBlockIds.DFAM ||
+		id == JagentRecognizedPrayChunkBlockIds.EXPC ||
+		id == JagentRecognizedPrayChunkBlockIds.DSEX ||
+		
+		id == JagentRecognizedPrayChunkBlockIds.DSGB;
+		
+		//Not CREA, PHOT, FILE, etc.
 	}
 }
