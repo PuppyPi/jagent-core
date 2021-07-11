@@ -4,10 +4,12 @@ import static rebound.io.util.JRECompatIOUtilities.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
+import rebound.exceptions.BinarySyntaxIOException;
 
 /**
  * This is the wrapper "Creatures Zip File" syntax of
@@ -41,15 +43,23 @@ public class CreaturesArchiveFormat
 	
 	
 	
-	public static void uncompress(InputStream in, OutputStream out) throws IOException
+	
+	/**
+	 * @throws BinarySyntaxIOException  on some format errors, like wrong magic number
+	 */
+	public static void uncompress(InputStream in, OutputStream out) throws IOException, BinarySyntaxIOException
 	{
-		byte[] h = new byte[HEADER.length];
-		readFully(in, h);
+		byte[] h = readFullyToNew(in, HEADER.length);
+		
+		if (!Arrays.equals(h, HEADER))
+			throw BinarySyntaxIOException.inst("CreaturesArchive File Format error, wrong magic number/string.");  //Todo this is what will be thrown if there's, eg, a zLib 1.12 or something ever XD''
 		
 		//Zlib data follows this
 		InflaterInputStream inflater = new InflaterInputStream(in, new Inflater(false));  //nowrap = false, use the zlib header (as opposed to reading without a header)
 		pump(inflater, out);
 	}
+	
+	
 	
 	public static void compress(InputStream in, OutputStream out, int level) throws IOException
 	{
