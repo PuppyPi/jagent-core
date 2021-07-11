@@ -19,7 +19,7 @@ public class MetaBlockParser
 	
 	public static void registerBlockParser(BlockParser bp)
 	{
-		bps.add(0, bp);
+		bps.add(0, bp);  //reverse order so that the Inline File block manager isn't in front of anything ever XD
 	}
 	
 	public static void unregisterBlockParser(BlockParser bp)
@@ -31,22 +31,22 @@ public class MetaBlockParser
 	static
 	{
 		//Load default parsers
+		MetaBlockParser.registerBlockParser(new FileBlockParser());  //*Always* do this last as it accepts any block!!
 		MetaBlockParser.registerBlockParser(new TagBlockParser());
-		MetaBlockParser.registerBlockParser(new FileBlockParser());
 	}
 	
 	
-	public boolean parseBlock(BlockHeader b, InputStream data, PrayTemplate template) throws IOException, FormatMismatchException
+	public void parseBlock(BlockHeader b, InputStream data, PrayTemplate template) throws IOException, FormatMismatchException
 	{
 		for (BlockParser curr : bps)
 		{
 			if (curr.canHandle(b))
 			{
 				curr.parseBlock(b, data, template);
-				return true;
+				return;
 			}
 		}
 		
-		return false;
+		throw new AssertionError("The file block maker should've gotten it! D:");
 	}
 }

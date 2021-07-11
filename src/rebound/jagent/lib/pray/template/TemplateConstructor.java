@@ -8,8 +8,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.Arrays;
-import java.util.Set;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
+import rebound.text.StringUtilities;
 
 public class TemplateConstructor
 {
@@ -94,25 +96,20 @@ public class TemplateConstructor
 	
 	protected void writeInlines() throws IOException
 	{
-		String[] keys = null;
+		for (FileBlockInPrayTemplate block : template.getFileBlocks())
 		{
-			Set<String> s = template.inlineFileNames.keySet();
-			keys = s.toArray(new String[s.size()]);
-			Arrays.sort(keys);
-		}
-		
-		String id = null, sourceFilename = null, prayFilename = null;
-		for (String key : keys)
-		{
-			sourceFilename = key;
-			id = template.getInlineFilePrayID(sourceFilename);
-			prayFilename = template.getInlineFilePrayName(sourceFilename);
+			String id = StringUtilities.decodeTextToStringReportingUnchecked(block.getId(), StandardCharsets.ISO_8859_1);
+			
 			out.write("inline ");
+			
+			if (block.isArchiveFormatInPray())
+				out.write("archive ");
+			
 			out.write(id);
 			out.write(" \"");
-			writeEscaped(sourceFilename);
+			writeEscaped(block.getSourceFileName());
 			out.write("\" \"");
-			writeEscaped(prayFilename);
+			writeEscaped(block.getName());
 			out.write("\"\n");
 		}
 	}
@@ -148,7 +145,11 @@ public class TemplateConstructor
 	
 	public void setOut(OutputStream bout)
 	{
-		this.out = new OutputStreamWriter(bout);
+		CharsetEncoder encoder = StandardCharsets.UTF_8.newEncoder();
+		encoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+		encoder.onMalformedInput(CodingErrorAction.REPORT);
+		
+		this.out = new OutputStreamWriter(bout, encoder);
 	}
 	
 	public void setTemplate(PrayTemplate template)

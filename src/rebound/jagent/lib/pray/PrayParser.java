@@ -84,22 +84,20 @@ public class PrayParser
 				vishnishtee = new ProtectiveInputStream(in, currBlock.getLengthInFile());
 				
 				if (currBlock.compressed)
-					blockDataStream = newInflaterInputStream(vishnishtee); //This will uncompress the block data on-the-fly
+					blockDataStream = newInflaterInputStream(vishnishtee);  //This will uncompress the block data on-the-fly
 				else
 					blockDataStream = vishnishtee;
 			}
 			
-			//Give to BlockParser
-			boolean supported = blars.parseBlock(currBlock, blockDataStream, template);
-			//Historical Note: The return value of parseBlock() used to be used to determine whether or not the block was actually consumed, but I switched the model so that even a "supported" isn't trusted to have read it to completion.
 			
-			//Complain if there's data left over, or it's unsupported (ie, all of the data left over)
+			//Give to BlockParser
+			blars.parseBlock(currBlock, blockDataStream, template);
+			
+			
+			//Complain if there's data left over!  That's very unusual and bad, since they won't be able to recreate the file!  (It probably should be considered a corrupted PRAY Chunk file!)
 			{
-				if (!supported)
-					System.err.println("Warning: Unsupported block type '"+currBlock.getIdTextBestEffort()+"', ignoring...");
-				else
-					if (vishnishtee.getTally() != currBlock.getLengthInFile())
-						System.err.println("Warning: Less block data was read than is present in file.  "+currBlock.getIdTextBestEffort()+" block \""+currBlock.getName()+"\"  specified that "+currBlock.lengthInFile+" bytes were present in the file"+(currBlock.isCompressed() ? " ("+currBlock.originalLength+" before compression)" : "")+", but only "+vishnishtee.getTally()+" were read.  This is either a bug in Jagent, or the block (if compressed) has extra data (and thus a mismatch between the Uncompressed-Length and the true length of the data once decompressed).");
+				if (vishnishtee.getTally() != currBlock.getLengthInFile())
+					System.err.println("Warning: Less block data was read than is present in file.  "+currBlock.getIdTextBestEffort()+" block \""+currBlock.getName()+"\"  specified that "+currBlock.lengthInFile+" bytes were present in the file"+(currBlock.isCompressed() ? " ("+currBlock.originalLength+" before compression)" : "")+", but only "+vishnishtee.getTally()+" were read.  This is either a bug in Jagent, or the block (if compressed) has extra data (and thus a mismatch between the Uncompressed-Length and the true length of the data once decompressed).");
 			}
 			
 			//Skip any unread data (or all of it, if the block wasn't supported)
@@ -184,11 +182,11 @@ public class PrayParser
 			//Wrap the meaningful characters in a String
 			try
 			{
-				b.name = StringUtilities.decodeTextToStringReporting(rawname, 0, actualLen, StandardCharsets.UTF_8);
+				b.name = StringUtilities.decodeTextToStringReporting(rawname, 0, actualLen, StandardCharsets.ISO_8859_1);
 			}
 			catch (CharacterCodingException exc)
 			{
-				b.name = StringUtilities.decodeTextToStringReplacing(rawname, 0, actualLen, StandardCharsets.UTF_8);
+				b.name = StringUtilities.decodeTextToStringReplacing(rawname, 0, actualLen, StandardCharsets.ISO_8859_1);
 				System.err.println("Warning: malformed or non-UTF8 block name: "+repr(b.name));
 			}
 		}

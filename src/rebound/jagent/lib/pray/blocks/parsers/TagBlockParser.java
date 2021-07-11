@@ -29,7 +29,7 @@ implements BlockParser
 		Group g = new Group();
 		template.addGroup(g); //Let the template configure it a bit
 		
-		g.setID(decodeTextToStringReporting(b.getId(), StandardCharsets.UTF_8));
+		g.setID(decodeTextToStringReporting(b.getId(), StandardCharsets.ISO_8859_1));
 		g.setName(b.getName());
 		
 		int intTagCount = Bytes.getLittleInt(data);
@@ -68,7 +68,7 @@ implements BlockParser
 				String script;
 				try
 				{
-					script = StringUtilities.decodeTextToStringReporting(encoded, StandardCharsets.UTF_8);
+					script = StringUtilities.decodeTextToStringReporting(encoded, StandardCharsets.ISO_8859_1);
 				}
 				catch (CharacterCodingException exc)
 				{
@@ -106,13 +106,12 @@ implements BlockParser
 		int len = Bytes.getLittleInt(in);
 		byte[] raw = new byte[len];
 		JRECompatIOUtilities.readFully(in, raw);
-		return universalNewlines(decodeTextToStringReporting(raw, StandardCharsets.UTF_8));
+		return universalNewlines(decodeTextToStringReporting(raw, StandardCharsets.ISO_8859_1));
 	}
 	
 	
 	public boolean canHandle(BlockHeader b)
 	{
-		//Todo blacklist blocks instead of whitelisting??  (ie, what is the behavior of 'unknown' block id's; assume they're tag blocks or something else or assume nothing? :> )
 		//TODO allow configurability by the user :>  (eg, from a text file placed next to the .jar or in their home folder for overrides :> )
 		
 		JagentRecognizedPrayChunkBlockIds id = JagentRecognizedPrayChunkBlockIds.lookup(b.getId());
@@ -126,9 +125,10 @@ implements BlockParser
 		id == JagentRecognizedPrayChunkBlockIds.DFAM ||
 		id == JagentRecognizedPrayChunkBlockIds.EXPC ||
 		id == JagentRecognizedPrayChunkBlockIds.DSEX ||
+		id == JagentRecognizedPrayChunkBlockIds.CHUM ||
 		
 		id == JagentRecognizedPrayChunkBlockIds.DSGB;
 		
-		//Not CREA, PHOT, FILE, etc.
+		//Not CREA, PHOT, FILE, GENE, etc.
 	}
 }

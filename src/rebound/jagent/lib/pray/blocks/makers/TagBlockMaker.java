@@ -11,31 +11,31 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import rebound.bits.Bytes;
 import rebound.io.util.FSIOUtilities;
-import rebound.jagent.lib.PathBoss;
 import rebound.jagent.lib.pray.BlockHeader;
 import rebound.jagent.lib.pray.CaosUtilitiesForJagent;
 import rebound.jagent.lib.pray.CaosUtilitiesForJagent.CaosAndRemoveScript;
 import rebound.jagent.lib.pray.InvalidNameException;
 import rebound.jagent.lib.pray.blocks.MetaBlockMaker;
 import rebound.jagent.lib.pray.template.Group;
+import rebound.text.StringUtilities;
 
 public class TagBlockMaker
 {
-	protected boolean mergeScripts = true; //default to historical behavior
+	protected boolean mergeScripts = true;  //default to historical behavior
 	
 	public void make(OutputStream out, Group g) throws IOException, InvalidNameException
 	{
-		if (!PathBoss.getInstance().isNameCrossplatformFriendly(g.getName()))
-			throw new InvalidNameException(g.getName(), "characters in the name are illegal on some platforms");
+		//Hot take: Non-Jagent tools running on Windows should just deal with this like Jagent does (and escape illegal characters), because agents with names that include "<C3>" and "<DS>" have been around for decades xD'
+		//		if (!PathBoss.getInstance().isNameCrossplatformFriendly(g.getName()))
+		//			throw new InvalidNameException(g.getName(), "characters in the name are illegal on some platforms");
 		
 		BlockHeader b = new BlockHeader();
-		b.setId(g.getID().getBytes(StandardCharsets.UTF_8));
+		b.setId(StringUtilities.encodeTextToByteArrayReportingUnchecked(g.getID(), StandardCharsets.ISO_8859_1));
 		b.setName(universalNewlines(g.getName()));
 		
 		
@@ -49,7 +49,7 @@ public class TagBlockMaker
 		for (int i = 0; i < g.getIntValCount(); i++)
 		{
 			length += 4; //CSLen
-			length += g.getIntTagName(i).getBytes(StandardCharsets.UTF_8).length; //CSVal
+			length += g.getIntTagName(i).getBytes(StandardCharsets.ISO_8859_1).length; //CSVal
 			
 			length += 4; //val
 		}
@@ -59,23 +59,23 @@ public class TagBlockMaker
 		for (int i = 0; i < g.getStrValCount(); i++)
 		{
 			length += 4; //name.CSLen
-			length += g.getStrTagName(i).getBytes(StandardCharsets.UTF_8).length; //name.CSVal
+			length += g.getStrTagName(i).getBytes(StandardCharsets.ISO_8859_1).length; //name.CSVal
 			
 			length += 4; //val.CSLen
-			length += g.getStrTagValue(i).getBytes(StandardCharsets.UTF_8).length; //val.CSVal
+			length += g.getStrTagValue(i).getBytes(StandardCharsets.ISO_8859_1).length; //val.CSVal
 		}
 		
 		//Script(s)
 		if (g.hasScripts())
 		{
 			length += 4;
-			length += "Script Count".getBytes(StandardCharsets.UTF_8).length;
+			length += "Script Count".getBytes(StandardCharsets.ISO_8859_1).length;
 			
 			length += 4; //Val
 			
 			
 			length += 4;
-			length += "Script 1".getBytes(StandardCharsets.UTF_8).length;
+			length += "Script 1".getBytes(StandardCharsets.ISO_8859_1).length;
 			
 			length += 4;
 			length += g.getScriptsLength();
@@ -154,7 +154,7 @@ public class TagBlockMaker
 				
 				
 				final File removeScriptFile = g.getRemoveScriptFile();
-				final String removeScriptFromFile = removeScriptFile == null ? null : FSIOUtilities.readAllText(removeScriptFile);
+				final String removeScriptFromFile = removeScriptFile == null ? null : StringUtilities.decodeTextToStringReportingUnchecked(FSIOUtilities.readAll(removeScriptFile), StandardCharsets.UTF_8);
 				
 				if (removeScriptFromFile != null)
 				{
@@ -187,7 +187,7 @@ public class TagBlockMaker
 						{
 							scripts = new ArrayList<>();
 							for (File f : scriptFiles)
-								scripts.add(FSIOUtilities.readAllText(f));
+								scripts.add(StringUtilities.decodeTextToStringReportingUnchecked(FSIOUtilities.readAll(f), StandardCharsets.UTF_8));
 						}
 						
 						final String wholeScript;
@@ -255,33 +255,11 @@ public class TagBlockMaker
 						{
 							File scriptFile = scriptFiles.get(i);
 							
-							byte[] originalEncoding = FSIOUtilities.readAll(scriptFile);
+							String script = decodeTextToStringReportingUnchecked(FSIOUtilities.readAll(scriptFile), StandardCharsets.UTF_8);
 							
-							String script;
-							try
+							if (g.getCutOutRemoveScriptFromFirstScript() && i == 0)
 							{
-								script = decodeTextToStringReporting(originalEncoding, StandardCharsets.UTF_8);
-							}
-							catch (CharacterCodingException exc)
-							{
-								System.err.println("Warning: malformed or non-UTF8 input at "+scriptFile.getAbsolutePath());
-								script = null;
-							}
-							
-							
-							byte[] newEncoding;
-							if (script != null)
-							{
-								if (g.getCutOutRemoveScriptFromFirstScript() && i == 0)
-								{
-									script = CaosUtilitiesForJagent.parse(script).otherCaos;
-								}
-								
-								newEncoding = script.getBytes(StandardCharsets.UTF_8);
-							}
-							else
-							{
-								newEncoding = originalEncoding;
+								script = CaosUtilitiesForJagent.parse(script).otherCaos;
 							}
 							
 							
@@ -289,8 +267,7 @@ public class TagBlockMaker
 							writeLString(buffer, "Script "+(i+1));
 							
 							//Str-tag value pstring
-							Bytes.putLittleInt(buffer, (int)newEncoding.length); //MUST CAST TO INT (32 BITS)!!  WILL TAKE DAYS TO DEBUG IF OVERLOADING IS FORGOTTEN!  xD
-							buffer.write(newEncoding);
+							writeLString(buffer, script);
 						}
 					}
 				}
@@ -317,7 +294,7 @@ public class TagBlockMaker
 	
 	protected void writeLString(OutputStream out, String str) throws IOException
 	{
-		byte[] bstr = universalNewlines(str).getBytes(StandardCharsets.UTF_8);
+		byte[] bstr = StringUtilities.encodeTextToByteArrayReportingUnchecked(universalNewlines(str), StandardCharsets.ISO_8859_1);
 		Bytes.putLittleInt(out, bstr.length);
 		out.write(bstr);
 	}

@@ -4,36 +4,40 @@
  */
 package rebound.jagent.lib.pray.template;
 
+import static rebound.text.StringUtilities.*;
+import static rebound.util.collections.CollectionUtilities.*;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+import rebound.annotations.semantic.allowedoperations.WritableValue;
+import rebound.annotations.semantic.reachability.LiveValue;
+import rebound.annotations.semantic.temporal.ConstantReturnValue;
+import rebound.bits.DataEncodingUtilities;
+import rebound.exceptions.BinarySyntaxException;
 
 public class PrayTemplate
 {
-	//Also a directory
-	protected File dir;
+	//Keys are filenames
+	protected List<FileBlockInPrayTemplate> fileBlocks;
 	
-	//Keys are source names, values are names for PRAY blocks
-	protected Hashtable<String, String> inlineFileNames;
-	protected Hashtable<String, String> inlineFileIDs;
-	
-	//The others
+	//The others (tag-format blocks :> )
 	protected List<Group> groups;
 	
 	
 	
+	//Also a directory
+	protected File dir;
+	
 	protected String desiredOutputFile;
+	
 	
 	
 	public PrayTemplate()
 	{
 		super();
-		inlineFileNames = new Hashtable<String, String>(3);
-		inlineFileIDs = new Hashtable<String, String>(3);
-		groups = new ArrayList<Group>();
+		fileBlocks = new ArrayList<>();
+		groups = new ArrayList<>();
 	}
 	
 	public PrayTemplate(File dir)
@@ -55,58 +59,50 @@ public class PrayTemplate
 		PrayTemplate o = (PrayTemplate)obj;
 		
 		return
-		eq(inlineFileIDs, o.inlineFileIDs) &&
-		eq(inlineFileNames, o.inlineFileNames) &&
-		
-		seteq(groups, o.groups);
+		eqv(fileBlocks, o.fileBlocks) &&
+		eqv(groups, o.groups);
 	}
 	
-	private static boolean eq(Object a, Object b)
+	
+	
+	
+	
+	
+	@WritableValue
+	@ConstantReturnValue
+	@LiveValue
+	public List<FileBlockInPrayTemplate> getFileBlocks()
 	{
-		if (a == b) return true;
-		if (a == null || b == null) return false;
-		return a.equals(b);
+		return fileBlocks;
 	}
 	
-	private static boolean seteq(List a, List b)
+	@WritableValue
+	@ConstantReturnValue
+	@LiveValue
+	public List<Group> getGroups()
 	{
-		if (a == b) return true;
-		if (a == null || b == null) return false;
-		
-		int length = a.size();
-		if (b.size() != length)
-			return false;
-		
-		List a2 = new ArrayList(a);
-		List b2 = new ArrayList(b);
-		
-		for (int i = 0; i < length; i++)
-		{
-			Object v = a2.get(i);
-			int idx = b2.indexOf(v);
-			if (idx == -1)
-				return false;
-			b2.remove(idx);
-		}
-		
-		return true;
+		return groups;
 	}
-	
-	
 	
 	
 	
 	public void addGroup(Group g)
 	{
 		g.setDir(getDir());
-		groups.add(g);
+		getGroups().add(g);
 	}
 	
 	public void addInline(String id, String realFilename, String prayFilename)
 	{
-		inlineFileIDs.put(realFilename, id);
-		inlineFileNames.put(realFilename, prayFilename);
+		byte[] idBytes = encodeTextToByteArrayReportingUnchecked(id, StandardCharsets.ISO_8859_1);
+		
+		if (idBytes.length != 4)
+			throw BinarySyntaxException.inst("Inline file block id is not 4 bytes!: "+repr(id)+" → "+DataEncodingUtilities.encodeHex(idBytes, DataEncodingUtilities.HEX_UPPERCASE, " "));
+		
+		getFileBlocks().add(new FileBlockInPrayTemplate(realFilename, idBytes, prayFilename, false));
 	}
+	
+	
 	
 	
 	public int getGroupCount()
@@ -121,7 +117,7 @@ public class PrayTemplate
 	
 	public int getInlineFilesCount()
 	{
-		return inlineFileNames.size();
+		return getFileBlocks().size();
 	}
 	
 	public void setDir(File dir)
@@ -134,27 +130,6 @@ public class PrayTemplate
 	public File getDir()
 	{
 		return this.dir;
-	}
-	
-	public String[] getInlineSourcefiles()
-	{
-		Set keySet = inlineFileNames.keySet();
-		Iterator i = keySet.iterator();
-		String[] rv = new String[keySet.size()];
-		int e = 0;
-		while (i.hasNext())
-			rv[e++] = (String)i.next();
-		return rv;
-	}
-	
-	public String getInlineFilePrayName(String sourcename)
-	{
-		return inlineFileNames.get(sourcename);
-	}
-	
-	public String getInlineFilePrayID(String sourcename)
-	{
-		return inlineFileIDs.get(sourcename);
 	}
 	
 	

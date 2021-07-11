@@ -7,18 +7,17 @@ package rebound.jagent.lib.pray;
 import static rebound.text.StringUtilities.*;
 import java.nio.charset.StandardCharsets;
 
-
 /**
  * This class contains the entire block header, but no data.
  * @author Sean
  */
 public class BlockHeader
 {
-	int lengthInFile, originalLength;
-	boolean compressed;
-	byte[] id;
-	String name;
-	String sId;
+	protected int lengthInFile, originalLength;
+	protected boolean compressed;
+	protected byte[] id;
+	protected String name;
+	protected transient String sId;
 	
 	public boolean isCompressed()
 	{
@@ -33,7 +32,7 @@ public class BlockHeader
 	public String getIdTextBestEffort()
 	{
 		if (sId == null)
-			sId = decodeTextToStringReplacing(id, StandardCharsets.UTF_8);
+			sId = decodeTextToStringReplacing(id, StandardCharsets.ISO_8859_1);
 		
 		return sId;
 	}

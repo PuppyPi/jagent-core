@@ -1,5 +1,6 @@
 package rebound.jagent.lib.pray;
 
+import static rebound.text.StringUtilities.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import javax.annotation.Nullable;
@@ -42,6 +43,6 @@ public enum JagentRecognizedPrayChunkBlockIds
 	
 	public byte[] toRawId()
 	{
-		return this.name().getBytes(StandardCharsets.UTF_8);  //UTF-8 not ASCII for forward-compatibility, although dubious I admit, with only four bytes ^^'
+		return encodeTextToByteArrayReportingUnchecked(this.name(), StandardCharsets.ISO_8859_1);
 	}
 }

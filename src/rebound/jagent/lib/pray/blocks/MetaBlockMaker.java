@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import rebound.bits.Bytes;
 import rebound.jagent.lib.pray.BlockHeader;
+import rebound.text.StringUtilities;
 
 public class MetaBlockMaker
 {
@@ -19,9 +20,9 @@ public class MetaBlockMaker
 		out.write(b.getId());
 		
 		//Name
-		byte[] name = b.getName().getBytes(StandardCharsets.UTF_8);
+		byte[] name = StringUtilities.encodeTextToByteArrayReportingUnchecked(b.getName(), StandardCharsets.ISO_8859_1);
 		byte[] fullname = new byte[128];
-		System.arraycopy(name, 0, fullname, 0, Math.min(name.length, 127)); //There must be at least one terminating 0 for spec compatibility
+		System.arraycopy(name, 0, fullname, 0, Math.min(name.length, 127));  //There must be at least one terminating 0 for spec compatibility    //Todo shouldn't we throw an error if the name is too long?? o,O
 		out.write(fullname);
 		
 		//PRAY Length

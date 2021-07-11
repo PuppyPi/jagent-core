@@ -23,6 +23,7 @@ import rebound.jagent.lib.caos2pray.scanner.C2PParser;
 import rebound.jagent.lib.caos2pray.scanner.CosParser;
 import rebound.jagent.lib.pray.template.Group;
 import rebound.jagent.lib.pray.template.PrayTemplate;
+import rebound.text.StringUtilities;
 
 /**
  * This is what interprets the C2P directives and uses them to make a {@link PrayTemplate}.
@@ -274,7 +275,7 @@ public class TemplateConverter
 				
 				//Check validity of name
 				{
-					byte[] encodedName = name.getBytes(StandardCharsets.UTF_8);
+					byte[] encodedName = StringUtilities.encodeTextToByteArrayReportingUnchecked(name, StandardCharsets.ISO_8859_1);
 					
 					if (encodedName.length >= 127) //127 is the max not 128 because of the c-string null terminator
 						throw new C2PSyntaxException("Invalid name, 127 bytes is the maximum for a PRAY block name (name was "+encodedName.length+"; \""+name+"\")");
@@ -303,6 +304,7 @@ public class TemplateConverter
 			for (int index : inlines)
 			{
 				String[] args = c2PCosFile.getCommandArgs(index);
+				
 				if (args.length == 2)
 				{
 					template.addInline("FILE", args[0], args[1]);

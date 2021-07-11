@@ -4,24 +4,30 @@
  */
 package rebound.jagent.lib.pray.template;
 
+import static rebound.util.objectutil.BasicObjectUtilities.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
 import javax.annotation.Nullable;
+import rebound.exceptions.NotSupportedReturnPath;
+import rebound.exceptions.NotYetImplementedException;
 import rebound.io.util.FSIOUtilities;
 import rebound.jagent.lib.FormatMismatchException;
 import rebound.jagent.lib.PathBoss;
 import rebound.text.StringUtilities;
 import rebound.util.Either;
+import rebound.util.objectutil.Equivalenceable;
 
 /**
  * This corresponds to a tag block.
  * @author RProgrammer
  */
 public class Group
+implements Equivalenceable
 {
 	protected String ID;
 	protected String name;
@@ -48,10 +54,8 @@ public class Group
 	
 	
 	@Override
-	public boolean equals(Object obj)
+	public boolean equivalent(Object obj) throws NotSupportedReturnPath
 	{
-		//TODO hashCode()!! x"D
-		
 		if (obj == this)
 			return true;
 		if (obj == null || !(obj instanceof Group))
@@ -69,12 +73,13 @@ public class Group
 		eq(removeScriptFilename, removeScriptFilename);
 	}
 	
-	private static boolean eq(Object a, Object b)
+	@Override
+	public int hashCodeOfContents()
 	{
-		if (a == b) return true;
-		if (a == null || b == null) return false;
-		return a.equals(b);
+		throw new NotYetImplementedException();  //Todo ^^'
 	}
+	
+	
 	
 	private static boolean mapeq(List ak, List av, List bk, List bv)
 	{
@@ -334,7 +339,7 @@ public class Group
 		{
 			String d = (String) scriptData;
 			d = StringUtilities.universalNewlines(d);  //for consistency with praysource.txt!
-			FSIOUtilities.writeAllText(f, d);
+			FSIOUtilities.writeAll(f, StringUtilities.encodeTextToByteArrayReportingUnchecked(d, StandardCharsets.UTF_8));
 		}
 		else
 		{

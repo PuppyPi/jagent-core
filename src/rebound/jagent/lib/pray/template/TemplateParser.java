@@ -4,15 +4,23 @@
  */
 package rebound.jagent.lib.pray.template;
 
+import static rebound.text.StringUtilities.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import rebound.io.util.TextIOUtilities;
+import javax.annotation.Nonnull;
+import rebound.exceptions.TextSyntaxException;
 import rebound.jagent.lib.Cursor;
+import rebound.text.StringUtilities;
 import rebound.util.Either;
+
+//Todo revamp this X'D
 
 public class TemplateParser
 {
@@ -24,13 +32,14 @@ public class TemplateParser
 	TAG_NONE = 0,
 	TAG_GROUP = 1,
 	TAG_INLINE = 2;
+	
 	public void parse() throws IOException
 	{
 		Cursor c = new Cursor();
 		template = new PrayTemplate();
 		ArrayList<Group> groups = new ArrayList<Group>();
 		
-		readKnownQuoted(c); //en-GB
+		discardLine(c);  //en-GB  (just discard it..I don't even know what this is for; it's not like the tag names are localized x'D )
 		
 		boolean lastWasCS = false;
 		char curr = 0;
@@ -142,6 +151,23 @@ public class TemplateParser
 		template.groups = groups;
 	}
 	
+	protected void discardLine(Cursor c) throws IOException
+	{
+		while (true)
+		{
+			int i = in.read();
+			
+			if (i == -1)
+				return;
+			
+			char curr = (char)i;
+			c.advance();
+			
+			if (curr == '\r' || curr == '\n')
+				return;
+		}
+	}
+	
 	//	Data cursor must be after first (-
 	protected void finishComment(Cursor c) throws IOException
 	{
@@ -228,15 +254,36 @@ public class TemplateParser
 	//Data cursor must be before first " of string
 	protected String readKnownQuoted(Cursor c) throws IOException
 	{
+		return readKnownQuotedOrWord(c, false).getValueIfA();
+	}
+	
+	/**
+	 * @return A means Quoted, B means unquoted
+	 */
+	protected @Nonnull Either<String, String> readKnownQuotedOrWord(Cursor c, boolean allowUnquotedToken) throws IOException
+	{
 		boolean inTheQuotes = false;
+		boolean unquoted = false;
 		boolean lastWasCS = false; //CommentStart '('
 		boolean lastWasEscape = false;
 		char curr = 0;
-		char[] currBuff = new char[1];
 		StringBuilder string = new StringBuilder();
-		while (in.read(currBuff) == 1)
+		
+		while (true)
 		{
-			curr = currBuff[0];
+			int i = in.read();
+			
+			if (i == -1)  //EOF
+			{
+				if (inTheQuotes)
+					throw TextSyntaxException.inst("Premature EOF, expected ending double-quote!");
+				else if (unquoted)
+					return Either.forB(string.toString());
+				else
+					throw TextSyntaxException.inst("Premature EOF, expected "+(allowUnquotedToken ? "either an unquoted token or a double-quoted string" : "a double-quoted string")+"!");
+			}
+			
+			curr = (char)i;
 			c.advance();
 			
 			if (!inTheQuotes && lastWasCS && curr == '-')
@@ -249,8 +296,32 @@ public class TemplateParser
 				if (lastWasCS)
 					lastWasCS = false;
 				
-				if (!inTheQuotes && curr == '"')
-					inTheQuotes = true;
+				if (!inTheQuotes)
+				{
+					if (curr == '"')
+						inTheQuotes = true;
+					else if (!Character.isWhitespace(curr))
+					{
+						if (allowUnquotedToken)
+						{
+							unquoted = true;
+							string.append(curr);
+						}
+						else
+						{
+							throw TextSyntaxException.inst("Unexpected double-quote was none was expected!: "+repr(curr));
+						}
+					}
+				}
+				else if (unquoted)
+				{
+					if (Character.isWhitespace(curr))
+						return Either.forB(string.toString());
+					else if (curr == '"')
+						throw TextSyntaxException.inst("Unexpected character where double-quote was expected!: "+repr(curr));
+					else
+						string.append(curr);
+				}
 				else if (inTheQuotes && lastWasEscape)
 				{
 					if (curr == 'n')
@@ -267,14 +338,42 @@ public class TemplateParser
 					if (curr == '\\')
 						lastWasEscape = true;
 					else if (curr == '"')
-						return string.toString();
+						return Either.forA(string.toString());
 					else
 						string.append(curr);
 				}
 			}
 		}
-		return string.toString();
 	}
+	
+	
+	
+	protected @Nonnull String readUnquotedToken(Cursor c) throws IOException
+	{
+		char curr = 0;
+		StringBuilder string = new StringBuilder();
+		
+		while (true)
+		{
+			int i = in.read();
+			
+			if (i == -1)  //EOF
+				return string.toString();
+			
+			curr = (char)i;
+			c.advance();
+			
+			if (Character.isWhitespace(curr))
+				return string.toString();
+			else if (curr == '"')
+				throw TextSyntaxException.inst("Unexpected double-quote where none was expected!   (Text so far: "+repr(string.toString())+")");
+			else
+				string.append(curr);
+		}
+	}
+	
+	
+	
 	
 	//Data cursor must be after first " of string
 	protected String readSpontaneousQuoted(Cursor c) throws IOException
@@ -328,15 +427,32 @@ public class TemplateParser
 	//Data cursor must be after 'inline ' and thus before the 'F' in 'FILE'
 	protected void readInlineTag(PrayTemplate template, Cursor c) throws IOException
 	{
-		//Read ID
-		char[] id = new char[4];
-		TextIOUtilities.forceRead(in, id);
-		c.advance(4);
+		boolean archiveFormatInPray;
+		String id;
+		{
+			String f = readUnquotedToken(c);
+			
+			if (f.equalsIgnoreCase("archive"))
+			{
+				archiveFormatInPray = true;
+				id = readUnquotedToken(c);
+			}
+			else
+			{
+				archiveFormatInPray = false;
+				id = f;
+			}
+		}
+		
+		byte[] idBytes = StringUtilities.encodeTextToByteArrayReportingUnchecked(id, StandardCharsets.ISO_8859_1);
+		
+		if (idBytes.length != 4)
+			throw TextSyntaxException.inst("PRAY Chunk block type id's (eg, FILE, PHOT, GENE, CREA, etc.) must always be four bytes!");
 		
 		String realFilename = readKnownQuoted(c);
 		String prayFilename = readKnownQuoted(c);
 		
-		template.addInline(new String(id), realFilename, prayFilename);
+		template.getFileBlocks().add(new FileBlockInPrayTemplate(realFilename, idBytes, prayFilename, archiveFormatInPray));
 	}
 	
 	
@@ -371,6 +487,10 @@ public class TemplateParser
 	
 	public void setIn(InputStream in)
 	{
-		this.in = new InputStreamReader(in);
+		CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
+		decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+		decoder.onMalformedInput(CodingErrorAction.REPORT);
+		
+		this.setIn(new InputStreamReader(in, decoder));
 	}
 }

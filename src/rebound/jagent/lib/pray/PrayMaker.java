@@ -10,14 +10,14 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 import rebound.jagent.lib.pray.blocks.MetaBlockMaker;
-import rebound.jagent.lib.pray.blocks.makers.InlineFileBlockMaker;
+import rebound.jagent.lib.pray.blocks.makers.FileBlockMaker;
 import rebound.jagent.lib.pray.blocks.makers.TagBlockMaker;
+import rebound.jagent.lib.pray.template.FileBlockInPrayTemplate;
 import rebound.jagent.lib.pray.template.Group;
 import rebound.jagent.lib.pray.template.PrayTemplate;
 
 public class PrayMaker
 {
-	protected InlineFileBlockMaker fileBlockMaker = new InlineFileBlockMaker();
 	protected TagBlockMaker tagBlockMaker = new TagBlockMaker();
 	
 	protected OutputStream out;
@@ -44,6 +44,7 @@ public class PrayMaker
 		overallIndex = 0;
 	}
 	
+	
 	public void writePrayTemplate(PrayTemplate template) throws IOException, InvalidNameException
 	{
 		//Tag blocks
@@ -57,21 +58,23 @@ public class PrayMaker
 			overallIndex++;
 		}
 		
-		String[] FILEsrcs = template.getInlineSourcefiles();
-		for (int i = 0; i < FILEsrcs.length; i++)
+		
+		//File blocks
+		for (FileBlockInPrayTemplate block : template.getFileBlocks())
 		{
-			String source = FILEsrcs[i];
+			String source = block.getSourceFileName();
 			
 			File src = new File(template.getDir().getPath()+'/'+source);
 			if (!src.exists())
 				throw new FileNotFoundException("Inline File \""+source+"\" not found!");
 			
-			fileBlockMaker.make(out, src, template.getInlineFilePrayID(source), template.getInlineFilePrayName(source));
+			FileBlockMaker.make(out, src, block.getId(), block.getName(), block.isArchiveFormatInPray());
 			
 			if (notifee != null) notifee.finWritingBlock(overallIndex);
 			overallIndex++;
 		}
 	}
+	
 	
 	public void writeLowlevelBlocks(List<Block> blocks) throws IOException
 	{
