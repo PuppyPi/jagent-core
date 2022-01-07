@@ -54,7 +54,7 @@ public class ToBLKConverter
 	
 	public void write(File path) throws IOException, FormatMismatchException
 	{
-		try (CloseableFlushableRandomAccessBytesInterface file = new RandomAccessFileWrapper(new RandomAccessFile(path, "rw")))
+		try (CloseableFlushableRandomAccessBytesInterface file = new RandomAccessFileWrapper(path, true))
 		{
 			write(file);
 		}

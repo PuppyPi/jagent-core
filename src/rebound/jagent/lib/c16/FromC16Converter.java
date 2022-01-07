@@ -28,7 +28,7 @@ public class FromC16Converter
 	
 	public void read(File path) throws IOException, FormatMismatchException
 	{
-		try (CloseableFlushableRandomAccessBytesInterface file = new RandomAccessFileWrapper(new RandomAccessFile(path, "r")))
+		try (CloseableFlushableRandomAccessBytesInterface file = new RandomAccessFileWrapper(path, false))
 		{
 			read(file);
 		}
