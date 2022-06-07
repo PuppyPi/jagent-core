@@ -21,25 +21,28 @@ public class PathBoss
 	
 	
 	protected Map<Character, String> charactersToEscapePosix = CollectionUtilities.mapof(
-			'/', "slash"
-			);
+	'\u0000', "nul",
+	'/', "slash"
+	);
 	
 	protected Map<Character, String> charactersToEscapeMac = CollectionUtilities.mapof(
-			'/', "slash",
-			':', "colon"
-			);
+	'\u0000', "nul",
+	'/', "slash",
+	':', "colon"
+	);
 	
 	protected Map<Character, String> charactersToEscapeWindows = CollectionUtilities.mapof(
-			'\\', "backslash",
-			'/', "slash",
-			':', "colon",
-			'*', "asterisk",
-			'?', "question",
-			'"', "dblquote",
-			'<', "lessthan",
-			'>', "greaterthan",
-			'|', "pipe"
-			);
+	'\u0000', "nul",
+	'\\', "backslash",
+	'/', "slash",
+	':', "colon",
+	'*', "asterisk",
+	'?', "question",
+	'"', "dblquote",
+	'<', "lessthan",
+	'>', "greaterthan",
+	'|', "pipe"
+	);
 	
 	protected Map<Character, String> charactersToEscapeUnionCombinationOfAll = charactersToEscapeWindows;  //The Windows set just happens to be a superset of all the others XD
 	
