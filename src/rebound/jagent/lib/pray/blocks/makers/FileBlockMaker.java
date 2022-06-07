@@ -25,7 +25,7 @@ public class FileBlockMaker
 		if (FileBlockParser.isNormalFileTypeBlock(JagentRecognizedPrayChunkBlockIds.lookup(prayID)))
 		{
 			if (!PathBoss.getInstance().isNameCrossplatformFriendly(prayName))
-				throw new InvalidNameException(prayName, "characters in the name are illegal on some platforms");
+				throw new InvalidNameException(prayName, "the name is illegal on some platforms (possibly due to illegal characters)");
 		}
 		
 		
