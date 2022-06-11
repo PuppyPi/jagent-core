@@ -5,7 +5,7 @@
 package rebound.jagent.lib;
 
 public class FormatMismatchException
-extends Exception
+extends RuntimeException
 {
 	private static final long serialVersionUID = 1L;
 
