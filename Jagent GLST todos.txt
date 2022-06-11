@@ -1,0 +1,8 @@
+Creatures 3, TheWorldAndEverythingInIt
+Docking Station, SpaceAndAllThatIsOutThere
+Sea Monkeys, TheSeaAndAllThatLurksInItsDepths
+
+https://creatures.wiki/GLST_PRAY_Block_Format
+
+
+f	+@ We support decoding/encoding GLST files now!! :DD
