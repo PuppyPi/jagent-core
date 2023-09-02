@@ -1,0 +1,1 @@
+• Support for M16 and N16 and RGB5551!!
